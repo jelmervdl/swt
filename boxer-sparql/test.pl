@@ -83,9 +83,9 @@ known_type_relation(X, rdf(dbpprop:X)). %wild guess
 rule(Pre, [triple(A, Relation, B)|Pre]) :-
 	member(rel(C, patient, A), Pre), 	
 	member(rel(C, agent, B), Pre),
+	\+ member(triple(A, _, B), Pre), % only continue if not already a relation between a and b
 	member(pred(C, Action), Pre),
-	known_action(Action, Relation),
-	\+ member(triple(A, Relation, B), Pre). % only succeed if not already applied.
+	known_action(Action, Relation).
 
 % Find 'of' relations
 rule(Pre, [triple(B, Rel, A) | Pre1]) :-
@@ -113,7 +113,7 @@ rename_instances_in_triples(A, B, [T|Rest], [T|Renamed]) :-
 
 % Apply all possible rule/2's
 postprocess(Pre, Post) :-
-	rule(Pre, Result), postprocess(Result, Post), ! % be careful with this cut here.
+	rule(Pre, Result), postprocess(Result, Post)%, ! % be careful with this cut here.
 	; Pre = Post.
 
 % A bit of a wrapper/hack around find_names. If the literal before the first
