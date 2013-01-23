@@ -12,7 +12,7 @@ s(alfa(AlfaType, Drs1, Drs2), Y) :-
 	s(Drs2, Y2),
 	append(Y1, Y2, Y).
 
-s(Tokens:named(Ref, Sym, NeType, _), [triple(Ref, rdfs:label, name(Tokens))]).
+s(Tokens:named(Ref, Sym, NeType, _), [triple(Ref, rdfs:label, nameref(Tokens))]).
 
 s(X:rel(Ref1, Ref2, Sym, _), [rel(Ref1, Sym, Ref2)]) :-
 	member(Sym, [agent, patient]).
@@ -25,7 +25,8 @@ s(X:pred(Ref1, Sym, n, _), [triple(Ref1, rdf:type, Resource)]) :-
 	known_type(Sym, Resource).
 
 % for testing: ignore eq.
-s(X:eq(Ref1, Ref1), []).
+%s(X:eq(Ref1, Ref1), []).
+s(X:eq(Ref1, Ref2), [eq(Ref1, Ref2)]).
 
 % also ignore the meaning of prop.
 s(X:prop(Ref, Drs), Y) :-
@@ -67,6 +68,7 @@ postprocess(Pre, Post) :-
 
 find_names(Sen, [], []).
 find_names(Sen, [T|Tokens], [N|Names]) :-
+	nonvar(Tokens),
 	member(T:Data, Sen),
 	member(tok:N, Data),
 	find_names(Sen, Tokens, Names).
@@ -81,13 +83,19 @@ filter_triples([X|R], R2) :-
 	filter_triples(R, R2).
 
 fill_in_names(_, [], []).
-fill_in_names(Literals, [triple(A, B, name(Tokens)) | Triples], [triple(A, B, Name) | TriplesWithNames]) :-
+fill_in_names(Literals, [triple(A, B, nameref(Tokens)) | Triples], [triple(A, B, lit(Name)) | TriplesWithNames]) :-
+	!,
+	find_names(Literals, Tokens, Names),
+	atomic_list_concat(Names, ' ', Name),
+	fill_in_names(Literals, Triples, TriplesWithNames).
+fill_in_names(Literals, [triple(nameref(Tokens), B, C) | Triples], [triple(lit(Name), B, C) | TriplesWithNames]) :-
 	!,
 	find_names(Literals, Tokens, Names),
 	atomic_list_concat(Names, ' ', Name),
 	fill_in_names(Literals, Triples, TriplesWithNames).
 fill_in_names(Literals, [triple(A, B, C) | Triples], [triple(A, B, C) | TriplesWithNames]) :-
-	\+ C = name(_),
+	\+ A = nameref(_),
+	\+ C = nameref(_),
 	fill_in_names(Literals, Triples, TriplesWithNames).
 
 sparql_write(Triples) :-
@@ -110,10 +118,10 @@ sparql_write_triple(triple(A, Ref, B)) :-
 	sparql_write_atom(Ref), write(' '),
 	sparql_write_atom(B), write('.').
 
-sparql_write_atom(X) :-
-	var(X), !,
-	random_varname(X),
-	write('?'), write(X).
+%% sparql_write_atom(X) :-
+%% 	var(X), !,
+%% 	random_varname(X),
+%% 	write('?'), write(X).
 
 sparql_write_atom(lit(X)) :-
 	write('"'), write(X), write('"').
