@@ -1,37 +1,42 @@
 
-s(Sen, drs(_Ref, Drs), Y) :-
-	sl(Sen, Drs, Y).
+s(drs(_Ref, Drs), Y) :-
+	sl(Drs, Y).
 
-s(Sen, X:whq(AnswerType, Drs1, Referent, Drs2), Y) :-
-	s(Sen, Drs1, Y1),
-	s(Sen, Drs2, Y2),
+s(X:whq(AnswerType, Drs1, Referent, Drs2), Y) :-
+	s(Drs1, Y1),
+	s(Drs2, Y2),
 	append(Y1, Y2, Y).
 
-s(Sen, alfa(AlfaType, Drs1, Drs2), Y) :-
-	s(Sen, Drs1, Y1),
-	s(Sen, Drs2, Y2),
+s(alfa(AlfaType, Drs1, Drs2), Y) :-
+	s(Drs1, Y1),
+	s(Drs2, Y2),
 	append(Y1, Y2, Y).
 
-s(Sen, Tokens:named(Ref, Sym, NeType, _), [triple(Ref, rdfs:label, lit(Name))]) :-
-	find_names(Sen, Tokens, Names),
-	atomic_list_concat(Names, ' ', Name).
+s(Tokens:named(Ref, Sym, NeType, _), [triple(Ref, rdfs:label, name(Tokens))]).
 
-s(Sen, X:rel(Ref1, Ref2, Sym, _), [rel(Ref1, Sym, Ref2)]) :-
+s(X:rel(Ref1, Ref2, Sym, _), [rel(Ref1, Sym, Ref2)]) :-
 	member(Sym, [agent, patient]).
 
-s(Sen, X:rel(Ref1, Ref2, Sym, _), [triple(Ref1, Rel, Ref2), rel(Ref1, Sym, Ref2)]) :-
+s(X:rel(Ref1, Ref2, Sym, _), [triple(Ref1, Rel, Ref2), rel(Ref1, Sym, Ref2)]) :-
 	\+ member(Sym, [agent, patient]),
 	known_relation(Sym, Rel).
 
-s(Sen, X:pred(Ref1, Sym, n, _), [triple(Ref1, rdf:type, Resource)]) :-
+s(X:pred(Ref1, Sym, n, _), [triple(Ref1, rdf:type, Resource)]) :-
 	known_type(Sym, Resource).
 
-s(Sen, X:pred(Ref1, Sym, v, _), [pred(Ref1, Sym)]).
+% for testing: ignore eq.
+s(X:eq(Ref1, Ref1), []).
 
-sl(Sen, [], []).
-sl(Sen, [X|R], M) :-
-	s(Sen, X, Yx),
-	sl(Sen, R, Yr),
+% also ignore the meaning of prop.
+s(X:prop(Ref, Drs), Y) :-
+	s(Drs, Y).
+
+s(X:pred(Ref1, Sym, v, _), [pred(Ref1, Sym)]).
+
+sl([], []).
+sl([X|R], M) :-
+	s(X, Yx),
+	sl(R, Yr),
 	append(Yx, Yr, M).
 
 known_type(person, rdf(foaf:'Person')).
@@ -47,11 +52,18 @@ rdf_namespace(rdfs, 'http://www.w3.org/2000/01/rdf-schema#').
 rdf_namespace(movie, 'http://data.linkedmdb.org/resource/movie/').
 
 % Find agent-patient-verb relations.
-postprocess(Pre, [triple(A, Relation, B)|Pre]) :-
+rule(Pre, [triple(A, Relation, B)|Pre]) :-
 	member(rel(C, patient, A), Pre), 	
 	member(rel(C, agent, B), Pre),
 	member(pred(C, Action), Pre),
 	known_action(Action, Relation).
+
+postprocess(Pre, Post) :-
+	% todo: apply as many rules as possible,
+	% but do not fail if no rule could be applied.
+	rule(Pre, Post)
+	;
+	Pre = Post.
 
 find_names(Sen, [], []).
 find_names(Sen, [T|Tokens], [N|Names]) :-
@@ -64,8 +76,19 @@ filter_triples([X|R], [X|R2]) :-
 	X = triple(_, _, _), !, %red cut, ooh!
 	filter_triples(R, R2).
 
-filter_triples([_|R], R2) :-
+filter_triples([X|R], R2) :-
+	\+ X = triple(_, _, _),
 	filter_triples(R, R2).
+
+fill_in_names(_, [], []).
+fill_in_names(Literals, [triple(A, B, name(Tokens)) | Triples], [triple(A, B, Name) | TriplesWithNames]) :-
+	!,
+	find_names(Literals, Tokens, Names),
+	atomic_list_concat(Names, ' ', Name),
+	fill_in_names(Literals, Triples, TriplesWithNames).
+fill_in_names(Literals, [triple(A, B, C) | Triples], [triple(A, B, C) | TriplesWithNames]) :-
+	\+ C = name(_),
+	fill_in_names(Literals, Triples, TriplesWithNames).
 
 sparql_write(Triples) :-
 	sparql_write_namespaces,
@@ -87,6 +110,11 @@ sparql_write_triple(triple(A, Ref, B)) :-
 	sparql_write_atom(Ref), write(' '),
 	sparql_write_atom(B), write('.').
 
+sparql_write_atom(X) :-
+	var(X), !,
+	random_varname(X),
+	write('?'), write(X).
+
 sparql_write_atom(lit(X)) :-
 	write('"'), write(X), write('"').
 
@@ -99,18 +127,31 @@ sparql_write_atom(X) :-
 	\+ X = rdf(_),
 	write(X).
 
-test :-
-	sem(1, X, Y),
-	s(X, Y, Z),
+%% random_varname(X) :-
+%% 	varname(X),
+%% 	retract(varname(X)).
+
+random_varname(a).
+
+varname(a).
+varname(b).
+varname(c).
+varname(d).
+varname(e).
+
+test(N) :-
+	sem(N, _, Y),
+	s(Y, Z),
 	postprocess(Z, ZZ),
 	filter_triples(ZZ, D),
 	write(D),
 	nl.
 
-go :-
-	sem(1, X, Y),
-	s(X, Y, Z),
+go(N) :-
+	sem(N, X, Y),
+	s(Y, Z),
 	postprocess(Z, ZZ),
 	filter_triples(ZZ, D),
-	sparql_write(D), nl,
+	fill_in_names(X, D, TriplesWithNames),
+	sparql_write(TriplesWithNames), nl,
 	fail ; !.
