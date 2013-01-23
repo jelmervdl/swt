@@ -1,5 +1,10 @@
 :- use_module(library(lists),[member/2,select/3]).
 
+sublist(A, B) :-
+	append(First, _, B),
+	append(_, A, First).
+
+
 % All the used namespaces in the resulting SPARQL query
 rdf_namespace(owl, 'http://www.w3.org/2002/07/owl#').
 rdf_namespace(xsd, 'http://www.w3.org/2001/XMLSchema#').
@@ -35,7 +40,7 @@ s(_:rel(Ref1, Ref2, Sym, _), [rel(Ref1, Sym, Ref2)]) :-
 
 s(_:rel(Ref1, Ref2, of, _), [of(Ref1, Ref2)]).
 
-s(_:rel(Ref1, Ref2, Sym, _), [triple(Ref1, rdf(Rel), Ref2), rel(Ref1, Sym, Ref2)]) :-
+s(_:rel(Ref1, Ref2, Sym, _), [triple(Ref1, Rel, Ref2), rel(Ref1, Sym, Ref2)]) :-
 	\+ member(Sym, [agent, patient, of]),
 	known_relation(Sym, Rel).
 
@@ -72,10 +77,10 @@ known_action(write, rdf(dbpprop:author)).
 known_action(direct, rdf(movie:director)).
 
 % Type (pred) to relation mapping
-known_type_relation(X, dbpprop:X). %wild guess
+known_type_relation(X, rdf(dbpprop:X)). %wild guess
 
 % Find agent-patient-verb relations.
-rule(Pre, [triple(A, rdf(Relation), B)|Pre]) :-
+rule(Pre, [triple(A, Relation, B)|Pre]) :-
 	member(rel(C, patient, A), Pre), 	
 	member(rel(C, agent, B), Pre),
 	member(pred(C, Action), Pre),
@@ -83,7 +88,7 @@ rule(Pre, [triple(A, rdf(Relation), B)|Pre]) :-
 	\+ member(triple(A, Relation, B), Pre). % only succeed if not already applied.
 
 % Find 'of' relations
-rule(Pre, [triple(B, rdf(Rel), A) | Pre1]) :-
+rule(Pre, [triple(B, Rel, A) | Pre1]) :-
 	select(of(A, B), Pre, Pre1),
 	member(type(A, Type), Pre1),
 	known_type_relation(Type, Rel).
@@ -94,8 +99,12 @@ rule(Pre, Post) :-
 	select(eq(A, B), Pre, Pre1), % removes eq/2
 	rename_instances_in_triples(B, A, Pre1, Post).
 
+% For equality, we rename all the equal symbols to the same symbol.
 rename_instances_in_triples(_, _, [], []).
 rename_instances_in_triples(A, B, [triple(A, X, Y)|Rest], [triple(B, X, Y)|Renamed]) :-
+	!,
+	rename_instances_in_triples(A, B, Rest, Renamed).
+rename_instances_in_triples(A, B, [triple(Y, X, A)|Rest], [triple(Y, X, B)|Renamed]) :-
 	!,
 	rename_instances_in_triples(A, B, Rest, Renamed).
 rename_instances_in_triples(A, B, [T|Rest], [T|Renamed]) :-
@@ -107,14 +116,25 @@ postprocess(Pre, Post) :-
 	rule(Pre, Result), postprocess(Result, Post), ! % be careful with this cut here.
 	; Pre = Post.
 
+% A bit of a wrapper/hack around find_names. If the literal before the first
+% searched-for token is 'The', add it to the name.
+find_names(Literals, [T|Tokens], Names) :-
+	(
+		sublist([_:TheLiteral, T:_], Literals),
+		member(tok:'The', TheLiteral), !,
+		['The'|Rest] = Names
+		;
+		Rest = Names
+	),
+	find_names_(Literals, [T|Tokens], Rest).
+
 % Find names by their tokens in Literals (second part of sem/3)
-find_names(_, [], []).
-find_names(Literals, [T|Tokens], [N|Names]) :-
+find_names_(_, [], []).
+find_names_(Literals, [T|Tokens], [N|Names]) :-
 	nonvar(Tokens),
 	member(T:Data, Literals),
 	member(tok:N, Data),
-	find_names(Literals, Tokens, Names).
-% todo: also include "The" if it is the token before the first of Tokens.
+	find_names_(Literals, Tokens, Names).
 
 % Replace nameref/1 with a string from Literals (second part of sem/3)
 fill_in_names(_, [], []).
