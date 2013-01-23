@@ -1,3 +1,4 @@
+:- use_module(library(lists),[member/2,select/3]).
 
 s(drs(_Ref, Drs), Y) :-
 	sl(Drs, Y).
@@ -57,14 +58,25 @@ rule(Pre, [triple(A, Relation, B)|Pre]) :-
 	member(rel(C, patient, A), Pre), 	
 	member(rel(C, agent, B), Pre),
 	member(pred(C, Action), Pre),
-	known_action(Action, Relation).
+	known_action(Action, Relation),
+	\+ member(triple(A, Relation, B), Pre). % only succeed if not already applied.
+
+rule(Pre, Post) :-
+	select(eq(A, B), Pre, Pre1), % removes eq/2
+	rename_instances_in_triples(B, A, Pre1, Post).
+
+rename_instances_in_triples(_, _, [], []).
+rename_instances_in_triples(A, B, [triple(A, X, Y)|Rest], [triple(B, X, Y)|Renamed]) :-
+	!,
+	rename_instances_in_triples(A, B, Rest, Renamed).
+rename_instances_in_triples(A, B, [T|Rest], [T|Renamed]) :-
+	\+ T = triple(A, _, _),
+	rename_instances_in_triples(A, B, Rest, Renamed).
+
 
 postprocess(Pre, Post) :-
-	% todo: apply as many rules as possible,
-	% but do not fail if no rule could be applied.
-	rule(Pre, Post)
-	;
-	Pre = Post.
+	rule(Pre, Result), postprocess(Result, Post), ! % be careful with this cut here.
+	; Pre = Post.
 
 find_names(Sen, [], []).
 find_names(Sen, [T|Tokens], [N|Names]) :-
