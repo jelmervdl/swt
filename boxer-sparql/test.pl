@@ -18,19 +18,22 @@ s(Tokens:named(Ref, Sym, NeType, _), [triple(Ref, rdfs:label, nameref(Tokens))])
 s(X:rel(Ref1, Ref2, Sym, _), [rel(Ref1, Sym, Ref2)]) :-
 	member(Sym, [agent, patient]).
 
+s(X:rel(Ref1, Ref2, of, _), [of(Ref1, Ref2)]).
+
 s(X:rel(Ref1, Ref2, Sym, _), [triple(Ref1, Rel, Ref2), rel(Ref1, Sym, Ref2)]) :-
-	\+ member(Sym, [agent, patient]),
+	\+ member(Sym, [agent, patient, of]),
 	known_relation(Sym, Rel).
 
-s(X:pred(Ref1, Sym, n, _), [triple(Ref1, rdf:type, Resource)]) :-
-	known_type(Sym, Resource).
+s(X:pred(Ref1, Sym, n, _), [type(Ref1, Sym) | Triples]) :-
+	known_type(Sym, Resource), Triples = [triple(Ref1, rdf:type, Resource)], ! % behavior-altering cut warning
+	; Triples = [].
 
 % for testing: ignore eq.
 %s(X:eq(Ref1, Ref1), []).
 s(X:eq(Ref1, Ref2), [eq(Ref1, Ref2)]).
 
 % also ignore the meaning of prop.
-s(X:prop(Ref, Drs), Y) :-
+s(_:prop(_, Drs), Y) :-
 	s(Drs, Y).
 
 s(X:pred(Ref1, Sym, v, _), [pred(Ref1, Sym)]).
@@ -42,13 +45,15 @@ sl([X|R], M) :-
 	append(Yx, Yr, M).
 
 known_type(person, rdf(foaf:'Person')).
-known_type(X, lit(X)). % fallback for now.
+%% known_type(X, lit(X)). % fallback for now.
 
 known_relation(X, lit(X)). % fallback for now.
 
 known_action(write, rdf(movie:writer)).
 known_action(write, rdf(dbpprop:author)).
 known_action(direct, rdf(movie:director)).
+
+known_type_relation(X, dbpedia:X). %wild guess
 
 rdf_namespace(rdfs, 'http://www.w3.org/2000/01/rdf-schema#').
 rdf_namespace(movie, 'http://data.linkedmdb.org/resource/movie/').
@@ -61,6 +66,14 @@ rule(Pre, [triple(A, Relation, B)|Pre]) :-
 	known_action(Action, Relation),
 	\+ member(triple(A, Relation, B), Pre). % only succeed if not already applied.
 
+% Find 'of' relations
+rule(Pre, [triple(A, Rel, B) | Pre1]) :-
+	select(of(A, B), Pre, Pre1),
+	member(type(A, Type), Pre1),
+	known_type_relation(Type, Rel).
+
+% Find x1 = x2 and replace x2 with x1.
+% Please apply this rule as last :/
 rule(Pre, Post) :-
 	select(eq(A, B), Pre, Pre1), % removes eq/2
 	rename_instances_in_triples(B, A, Pre1, Post).
@@ -73,27 +86,20 @@ rename_instances_in_triples(A, B, [T|Rest], [T|Renamed]) :-
 	\+ T = triple(A, _, _),
 	rename_instances_in_triples(A, B, Rest, Renamed).
 
-
+% Apply all possible rule/2's
 postprocess(Pre, Post) :-
 	rule(Pre, Result), postprocess(Result, Post), ! % be careful with this cut here.
 	; Pre = Post.
 
-find_names(Sen, [], []).
-find_names(Sen, [T|Tokens], [N|Names]) :-
+% Find names by their tokens in Literals (second part of sem/3)
+find_names(_, [], []).
+find_names(Literals, [T|Tokens], [N|Names]) :-
 	nonvar(Tokens),
-	member(T:Data, Sen),
+	member(T:Data, Literals),
 	member(tok:N, Data),
-	find_names(Sen, Tokens, Names).
+	find_names(Literals, Tokens, Names).
 
-filter_triples([],[]).
-filter_triples([X|R], [X|R2]) :-
-	X = triple(_, _, _), !, %red cut, ooh!
-	filter_triples(R, R2).
-
-filter_triples([X|R], R2) :-
-	\+ X = triple(_, _, _),
-	filter_triples(R, R2).
-
+% Replace nameref/1 with a string from Literals (second part of sem/3)
 fill_in_names(_, [], []).
 fill_in_names(Literals, [triple(A, B, nameref(Tokens)) | Triples], [triple(A, B, lit(Name)) | TriplesWithNames]) :-
 	!,
@@ -109,6 +115,16 @@ fill_in_names(Literals, [triple(A, B, C) | Triples], [triple(A, B, C) | TriplesW
 	\+ A = nameref(_),
 	\+ C = nameref(_),
 	fill_in_names(Literals, Triples, TriplesWithNames).
+
+
+% Remove everything that is not a triple/3
+filter_triples([],[]).
+filter_triples([X|R], [X|R2]) :-
+	X = triple(_, _, _), !,
+	filter_triples(R, R2).
+filter_triples([X|R], R2) :-
+	\+ X = triple(_, _, _),
+	filter_triples(R, R2).
 
 sparql_write(Triples) :-
 	sparql_write_namespaces,
