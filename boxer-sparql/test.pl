@@ -1,5 +1,20 @@
 :- use_module(library(lists),[member/2,select/3]).
 
+% All the used namespaces in the resulting SPARQL query
+rdf_namespace(owl, 'http://www.w3.org/2002/07/owl#').
+rdf_namespace(xsd, 'http://www.w3.org/2001/XMLSchema#').
+rdf_namespace(rdfs, 'http://www.w3.org/2000/01/rdf-schema#').
+rdf_namespace(rdf, 'http://www.w3.org/1999/02/22-rdf-syntax-ns#').
+rdf_namespace(foaf, 'http://xmlns.com/foaf/0.1/').
+rdf_namespace(dc, 'http://purl.org/dc/elements/1.1/').
+rdf_namespace(dbpedia2, 'http://dbpedia.org/property/').
+rdf_namespace(dbpprop, 'http://dbpedia.org/property/').
+rdf_namespace(dbpedia, 'http://dbpedia.org/').
+rdf_namespace(dbpedia-owl, 'http://dbpedia.org/ontology/').
+rdf_namespace(skos, 'http://www.w3.org/2004/02/skos/core#').
+%rdf_namespace(, 'http://dbpedia.org/resource/').
+
+% s-rules are rules to rewrite the drs/2 structure into a list of triples and hints.
 s(drs(_Ref, Drs), Y) :-
 	sl(Drs, Y).
 
@@ -13,19 +28,19 @@ s(alfa(_AlfaType, Drs1, Drs2), Y) :-
 	s(Drs2, Y2),
 	append(Y1, Y2, Y).
 
-s(Tokens:named(Ref, _Sym, _NeType, _), [triple(Ref, rdfs:label, nameref(Tokens))]).
+s(Tokens:named(Ref, _Sym, _NeType, _), [triple(Ref, rdf(rdfs:label), nameref(Tokens))]).
 
 s(_:rel(Ref1, Ref2, Sym, _), [rel(Ref1, Sym, Ref2)]) :-
 	member(Sym, [agent, patient]).
 
 s(_:rel(Ref1, Ref2, of, _), [of(Ref1, Ref2)]).
 
-s(_:rel(Ref1, Ref2, Sym, _), [triple(Ref1, Rel, Ref2), rel(Ref1, Sym, Ref2)]) :-
+s(_:rel(Ref1, Ref2, Sym, _), [triple(Ref1, rdf(Rel), Ref2), rel(Ref1, Sym, Ref2)]) :-
 	\+ member(Sym, [agent, patient, of]),
 	known_relation(Sym, Rel).
 
 s(_:pred(Ref1, Sym, n, _), [type(Ref1, Sym) | Triples]) :-
-	known_type(Sym, Resource), Triples = [triple(Ref1, rdf:type, Resource)], ! % behavior-altering cut warning
+	known_type(Sym, Resource), Triples = [triple(Ref1, rdf(rdf:type), Resource)], ! % behavior-altering cut warning
 	; Triples = [].
 
 % for testing: ignore eq.
@@ -38,28 +53,29 @@ s(_:prop(_, Drs), Y) :-
 
 s(_:pred(Ref1, Sym, v, _), [pred(Ref1, Sym)]).
 
+% sl/2 is s/2 but for lists of drs/2's.
 sl([], []).
 sl([X|R], M) :-
 	s(X, Yx),
 	sl(R, Yr),
 	append(Yx, Yr, M).
 
+% typename to type resource mapping
 known_type(person, rdf(foaf:'Person')).
 %% known_type(X, lit(X)). % fallback for now.
 
 known_relation(X, lit(X)). % fallback for now.
 
+% Verb to relation mapping
 known_action(write, rdf(movie:writer)).
 known_action(write, rdf(dbpprop:author)).
 known_action(direct, rdf(movie:director)).
 
-known_type_relation(X, dbpedia:X). %wild guess
-
-rdf_namespace(rdfs, 'http://www.w3.org/2000/01/rdf-schema#').
-rdf_namespace(movie, 'http://data.linkedmdb.org/resource/movie/').
+% Type (pred) to relation mapping
+known_type_relation(X, dbpprop:X). %wild guess
 
 % Find agent-patient-verb relations.
-rule(Pre, [triple(A, Relation, B)|Pre]) :-
+rule(Pre, [triple(A, rdf(Relation), B)|Pre]) :-
 	member(rel(C, patient, A), Pre), 	
 	member(rel(C, agent, B), Pre),
 	member(pred(C, Action), Pre),
@@ -67,7 +83,7 @@ rule(Pre, [triple(A, Relation, B)|Pre]) :-
 	\+ member(triple(A, Relation, B), Pre). % only succeed if not already applied.
 
 % Find 'of' relations
-rule(Pre, [triple(A, Rel, B) | Pre1]) :-
+rule(Pre, [triple(B, rdf(Rel), A) | Pre1]) :-
 	select(of(A, B), Pre, Pre1),
 	member(type(A, Type), Pre1),
 	known_type_relation(Type, Rel).
@@ -98,6 +114,7 @@ find_names(Literals, [T|Tokens], [N|Names]) :-
 	member(T:Data, Literals),
 	member(tok:N, Data),
 	find_names(Literals, Tokens, Names).
+% todo: also include "The" if it is the token before the first of Tokens.
 
 % Replace nameref/1 with a string from Literals (second part of sem/3)
 fill_in_names(_, [], []).
@@ -128,7 +145,7 @@ filter_triples([X|R], R2) :-
 
 sparql_write(Triples) :-
 	sparql_write_namespaces,
-	write('SELECT ?x0 WHERE {'),nl,
+	write('SELECT * WHERE {'),nl,
 	(
 		member(Triple, Triples),
 		write('  '), sparql_write_triple(Triple), nl,
@@ -152,28 +169,22 @@ sparql_write_triple(triple(A, Ref, B)) :-
 %% 	write('?'), write(X).
 
 sparql_write_atom(lit(X)) :-
-	write('"'), write(X), write('"').
+	write('"'), write(X), write('"@en').
 
 sparql_write_atom(rdf(X)) :-
 	write(X).
 
 % also a bit of a fallback.
+% also, if it isn't a rdf-atom nor a literal, it is probably a variable.
 sparql_write_atom(X) :-
 	\+ X = lit(_),
 	\+ X = rdf(_),
+	write('?'),
 	write(X).
 
 %% random_varname(X) :-
 %% 	varname(X),
 %% 	retract(varname(X)).
-
-random_varname(a).
-
-varname(a).
-varname(b).
-varname(c).
-varname(d).
-varname(e).
 
 test(N) :-
 	sem(N, _, Y),
