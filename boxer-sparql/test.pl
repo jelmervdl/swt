@@ -11,7 +11,7 @@ sublist(A, B) :-
 s(drs(_Ref, Drs), Y) :-
 	sl(Drs, Y).
 
-s(_:whq(_AnswerType, Drs1, _Referent, Drs2), Y) :-
+s(_:whq(_AnswerType, Drs1, Ref, Drs2), [topic(Ref) | Y]) :-
 	s(Drs1, Y1),
 	s(Drs2, Y2),
 	append(Y1, Y2, Y).
@@ -26,7 +26,7 @@ s(Tokens:named(Ref, _Sym, _NeType, _), [triple(Ref, rdf(rdfs:label), nameref(Tok
 s(_:rel(Ref1, Ref2, Sym, _), [rel(Ref1, Sym, Ref2)]) :-
 	member(Sym, [agent, patient]).
 
-s(_:rel(Ref1, Ref2, of, _), [of(Ref1, Ref2)]).
+s(_:rel(Ref1, Ref2, Keyword, _), [rel(Ref1, Keyword, Ref2)]).
 
 s(_:rel(Ref1, Ref2, Sym, _), [triple(Ref1, Rel, Ref2), rel(Ref1, Sym, Ref2)]) :-
 	\+ member(Sym, [agent, patient, of]),
@@ -36,15 +36,20 @@ s(_:pred(Ref1, Sym, n, _), [type(Ref1, Sym) | Triples]) :-
 	known_type(Sym, Resource), Triples = [triple(Ref1, rdf(rdf:type), Resource)], ! % behavior-altering cut warning
 	; Triples = [].
 
-% for testing: ignore eq.
-%s(X:eq(Ref1, Ref1), []).
+s(_:pred(Ref1, Sym, v, _), [pred(Ref1, Sym)]).
+
+s(_:pred(Ref1, topic, a, _), [topic(Ref1)]).
+
 s(_:eq(Ref1, Ref2), [eq(Ref1, Ref2)]).
 
 % also ignore the meaning of prop.
 s(_:prop(_, Drs), Y) :-
 	s(Drs, Y).
 
-s(_:pred(Ref1, Sym, v, _), [pred(Ref1, Sym)]).
+s(_:imp(Drs1, Drs2), Y) :-
+	s(Drs1, Y1),
+	s(Drs2, Y2),
+	append(Y1, Y2, Y).
 
 % sl/2 is s/2 but for lists of drs/2's.
 sl([], []).
