@@ -9,6 +9,12 @@ rule(Pre, [triple(A, Relation, B)|Pre]) :-
 	member(pred(C, Action), Pre),
 	known_action(Action, Relation).
 
+% Turn prime & minister into 'prime minister' 
+rule(Pre, [type(Rel, Extended) | Post]) :-
+	select(type(Rel, Sym), Pre, Pre1),
+	select(adverb(Rel, Adv), Pre1, Post),
+	atomic_list_concat([Adv, Sym], ' ', Extended).
+
 % Find 'in' and 'of' relations
 rule(Pre, [triple(B, Rel, A) | Pre1]) :-
 	member(Keyword, [in, of]),

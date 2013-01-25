@@ -38,7 +38,9 @@ s(_:pred(Ref1, Sym, n, _), [type(Ref1, Sym) | Triples]) :-
 
 s(_:pred(Ref1, Sym, v, _), [pred(Ref1, Sym)]).
 
-s(_:pred(Ref1, topic, a, _), [topic(Ref1)]).
+s(_:pred(Ref1, topic, a, _), [topic(Ref1)]) :- !.
+
+s(_:pred(Ref1, Sym, a, _), [adverb(Ref1, Sym)]).
 
 s(_:eq(Ref1, Ref2), [eq(Ref1, Ref2)]).
 
