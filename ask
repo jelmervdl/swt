@@ -1,0 +1,3 @@
+#!/bin/bash
+./parse "$1" > /tmp/parse.pl
+./answer /tmp/parse.pl

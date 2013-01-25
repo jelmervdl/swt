@@ -1,0 +1,2 @@
+#!/bin/bash
+swipl -s boxer-sparql/test.pl -f $1 -g "go(1)." -t "halt."

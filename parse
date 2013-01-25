@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# --candc-parser-noisy_rules to prevent appo/3 constructs from showing up
+echo $1 \
+	| candc/bin/t \
+		--stdin \
+	| candc/bin/candc \
+		--candc-parser-noisy_rules false \
+		--candc-parser-question_rules true  \
+		--candc-parser-seen_rules false \
+		--models candc/models/questions \
+		--candc-printer boxer \
+	| candc/bin/boxer \
+		--stdin \
+		--box true \
+		--resolve true \
+		--instantiate true \
+		--roles proto
