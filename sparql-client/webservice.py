@@ -1,4 +1,5 @@
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+from urllib2 import HTTPError
 import cgi
 import subprocess
 import sparql
@@ -15,9 +16,13 @@ class QuestionableService:
         sparql_queries = self.__parse(query)
 
         for sparql_query in sparql_queries:
-            answers = self.sparql.query(sparql_query).fetchall()
-            if len(answers) > 0:
-                break
+            try:
+                print "%s\n" % (sparql_query,)
+                answers = self.sparql.query(sparql_query).fetchall()
+                if len(answers) > 0:
+                    break
+            except HTTPError, e:
+                print e
 
         return answers
 
@@ -26,9 +31,17 @@ class QuestionableService:
         return subprocess.check_output(cmd).split("\n\n")
 
 
+class QuestionableView:
+
+    def render(self, result):
+        return result
+
+
 class QuestionableHandler(BaseHTTPRequestHandler):
 
     service = QuestionableService()
+
+    view = QuestionableView()
 
     def do_GET(self):
         self.send_response(200)
@@ -49,12 +62,19 @@ class QuestionableHandler(BaseHTTPRequestHandler):
                 'CONTENT_TYPE': self.headers['Content-Type'],
             })
 
-        self.send_response(200)
-        self.send_header('Content-Type', 'application/json')
-        self.end_headers()
-
         result = self.service.query(form['query'].value)
-        self.wfile.write(result)
+
+        if len(result) == 1:
+            self.send_response(301)
+            self.send_header('Location', result[0][0].value)
+            self.end_headers()
+        else:
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            response = map(self.view.render, result)
+            self.wfile.write(response)
+        
         return
 
 

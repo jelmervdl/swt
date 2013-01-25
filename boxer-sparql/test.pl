@@ -33,7 +33,7 @@ s(_:rel(Ref1, Ref2, Keyword, _), [rel(Ref1, Keyword, Ref2)]).
 %	known_relation(Sym, Rel).
 
 s(_:pred(Ref1, Sym, n, _), [type(Ref1, Sym) | Triples]) :-
-	known_type(Sym, Resource), Triples = [triple(Ref1, rdf(rdf:type), Resource)], ! % behavior-altering cut warning
+	known_type(Sym, Resource), Triples = [triple(Ref1, rdf(rdf:type), Resource)]%, ! % behavior-altering cut warning
 	; Triples = [].
 
 s(_:pred(Ref1, Sym, v, _), [pred(Ref1, Sym)]).
