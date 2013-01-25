@@ -16,6 +16,12 @@ rule(Pre, [triple(B, Rel, A) | Pre1]) :-
 	member(type(A, Type), Pre1),
 	known_type_relation(Type, Rel).
 
+% Or maybe they are the other way around: A of B, therefore B something of A.
+rule(Pre, [triple(A, rel, B) | Pre1]) :-
+	member(Keyword, [in, of]),
+	select(rel(A, Keyword, B), Pre, Pre1),
+	member(type(A, _Type), Pre1).
+
 % Find x1 = x2 and replace x2 with x1.
 % Please apply this rule as last :/
 rule(Pre, Post) :-

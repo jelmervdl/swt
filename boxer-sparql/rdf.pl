@@ -10,6 +10,6 @@ rdf_namespace(dc, 'http://purl.org/dc/elements/1.1/').
 rdf_namespace(dbpedia2, 'http://dbpedia.org/property/').
 rdf_namespace(dbpprop, 'http://dbpedia.org/property/').
 rdf_namespace(dbpedia, 'http://dbpedia.org/').
-rdf_namespace(dbpedia-owl, 'http://dbpedia.org/ontology/').
+rdf_namespace(dbpediaowl, 'http://dbpedia.org/ontology/').
 rdf_namespace(skos, 'http://www.w3.org/2004/02/skos/core#').
 %rdf_namespace(, 'http://dbpedia.org/resource/').

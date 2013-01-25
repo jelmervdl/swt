@@ -1,5 +1,5 @@
 :- use_module(library(lists),[member/2,select/3]).
-:- use_module(hints, [known_type/2, known_relation/2, known_action/2, known_type_relation/2]).
+:- use_module(hints, [known_type/2, known_relation/2, known_action/2]).
 :- use_module(rules, [rule/2]).
 :- use_module(sparql, [sparql_write/1]).
 
@@ -23,14 +23,14 @@ s(alfa(_AlfaType, Drs1, Drs2), Y) :-
 
 s(Tokens:named(Ref, _Sym, _NeType, _), [triple(Ref, rdf(rdfs:label), nameref(Tokens))]).
 
-s(_:rel(Ref1, Ref2, Sym, _), [rel(Ref1, Sym, Ref2)]) :-
-	member(Sym, [agent, patient]).
+%s(_:rel(Ref1, Ref2, Sym, _), [rel(Ref1, Sym, Ref2)]) :-
+%	member(Sym, [agent, patient]).
 
 s(_:rel(Ref1, Ref2, Keyword, _), [rel(Ref1, Keyword, Ref2)]).
 
-s(_:rel(Ref1, Ref2, Sym, _), [triple(Ref1, Rel, Ref2), rel(Ref1, Sym, Ref2)]) :-
-	\+ member(Sym, [agent, patient, of]),
-	known_relation(Sym, Rel).
+%s(_:rel(Ref1, Ref2, Sym, _), [triple(Ref1, Rel, Ref2), rel(Ref1, Sym, Ref2)]) :-
+%	\+ member(Sym, [agent, patient, of]),
+%	known_relation(Sym, Rel).
 
 s(_:pred(Ref1, Sym, n, _), [type(Ref1, Sym) | Triples]) :-
 	known_type(Sym, Resource), Triples = [triple(Ref1, rdf(rdf:type), Resource)], ! % behavior-altering cut warning

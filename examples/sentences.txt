@@ -18,3 +18,4 @@ Which director has directed the most movies featuring Johnny Depp ?
 Which country borders the Northpole ?
 
 List all countries in Europe.
+Name all cities in Groningen.
