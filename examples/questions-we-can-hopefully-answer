@@ -1,7 +1,12 @@
 SIMPLE QUERIES
 Who is the Prime Minister of the UK?
+(There is no such property. There is: leaderTitle which contains "Prime Minister", and then there is leaderName, which contains among the monarch "David Cameron". Go figure.)
+
 Where was Tom Cruise born?
+(Born is interpreted as a past tense form of to bear. Except my Oxford dictionary sais: "usage: Until the 18th century borne and born were simply variant forms of the past participle of bear, used interchangeably with no distinction in meaning. By around 1775, however, the present distinction in use had become established.")
+
 When was Apple founded?
+(dbpprop:foundation)
 
 NEGATION
 Which rivers do not flow through France?
