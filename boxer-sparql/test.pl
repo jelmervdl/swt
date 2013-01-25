@@ -1,7 +1,7 @@
 :- use_module(library(lists),[member/2,select/3]).
 :- use_module(hints, [known_type/2, known_relation/2, known_action/2]).
 :- use_module(rules, [rule/2]).
-:- use_module(sparql, [sparql_write/1]).
+:- use_module(sparql, [sparql_write/2]).
 
 sublist(A, B) :-
 	append(First, _, B),
@@ -119,10 +119,11 @@ test(N) :-
 	nl.
 
 go(N) :-
-	sem(N, X, Y),
-	s(Y, Z),
-	postprocess(Z, ZZ),
-	filter_triples(ZZ, D),
-	fill_in_names(X, D, TriplesWithNames),
-	sparql_write(TriplesWithNames), nl,
+	sem(N, Literals, Drs),
+	s(Drs, Hints),
+	postprocess(Hints, EnrichedHints),
+	filter_triples(EnrichedHints, Triples),
+	fill_in_names(Literals, Triples, TriplesWithNames),
+	member(topic(Topic), EnrichedHints),
+	sparql_write(Topic, TriplesWithNames), nl,
 	fail ; !.

@@ -1,9 +1,9 @@
-:- module(sparql, [sparql_write/1]).
+:- module(sparql, [sparql_write/2]).
 :- use_module(rdf, [rdf_namespace/2]).
 
-sparql_write(Triples) :-
+sparql_write(Topic, Triples) :-
 	sparql_write_namespaces,
-	write('SELECT * WHERE {'),nl,
+	write('SELECT '), sparql_write_atom(Topic), write(' WHERE {'),nl,
 	(
 		member(Triple, Triples),
 		write('  '), sparql_write_triple(Triple), nl,
