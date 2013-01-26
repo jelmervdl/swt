@@ -38,6 +38,15 @@ rule(Pre, [triple(A, rel, B) | Pre1]) :-
 	select(rel(A, Keyword, B), Pre, Pre1),
 	member(type(A, _Type), Pre1).
 
+% There is some sort of relation (e.g. flowing through) that is impossible
+% to guess the word for.
+rule(Pre, [triple(A, rel, B) | Post]) :-
+	member(pred(E, _Verb), Pre), % some event
+	select(rel(E, agent, A), Pre, Post), % .. that is done by A
+	member(rel(E, _, B), Post),
+	\+ member(triple(A, _, B), Pre).
+
+
 % If the topic has been given a name that is the first word of
 % the sentence, drop it. It is most likely something like "Show"
 % or "List".

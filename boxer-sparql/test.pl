@@ -53,6 +53,9 @@ s(_:imp(Drs1, Drs2), Y) :-
 	s(Drs2, Y2),
 	append(Y1, Y2, Y).
 
+s(_:not(Drs), [not(Y)]) :-
+	s(Drs, Y).
+
 % sl/2 is s/2 but for lists of drs/2's.
 sl([], []).
 sl([X|R], M) :-
@@ -132,6 +135,7 @@ test(N) :-
 go(N) :-
 	sem(N, Literals, Drs),
 	s(Drs, Hints),
+	%write(Hints),nl,
 	postprocess(Hints, EnrichedHints),
 	filter_triples(EnrichedHints, Triples),
 	fill_in_names(Literals, Triples, TriplesWithNames),

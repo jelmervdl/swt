@@ -6,10 +6,21 @@ Where was Tom Cruise born?
 (Born is interpreted as a past tense form of to bear. Except my Oxford dictionary sais: "usage: Until the 18th century borne and born were simply variant forms of the past participle of bear, used interchangeably with no distinction in meaning. By around 1775, however, the present distinction in use had become established.")
 
 When was Apple founded?
-(dbpprop:foundation)
+(dbpprop:foundation, foundingDate)
+
+Through which countries runs the Rhine?
 
 NEGATION
+Which rivers flow through France?
 Which rivers do not flow through France?
+(Could be solved with:
+SELECT DISTINCT ?x1 WHERE {
+  ?x1 rdf:type dbpediaowl:River.
+  ?x1 ?rel ?x0.
+  ?x3 rdfs:label "France"@en.
+  FILTER( ?x3 != ?x0 )
+})
+
 Which countries do not border Mexico?
 Which songs by the beatles were not played on radio? (ok, that information is not on dbpedia, but it would be nice to analyze corectly)
 
