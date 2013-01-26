@@ -33,14 +33,14 @@ rule(Pre, [triple(B, Rel, A) | Pre1]) :-
 % Or maybe they are the other way around: A of B, therefore B something of A.
 % But most of the time we have no idea what the actual relation name is
 % therefore just use a variable.
-rule(Pre, [triple(A, rel, B) | Pre1]) :-
+rule(Pre, [triple(A, var(_), B) | Pre1]) :-
 	member(Keyword, [in, of]),
 	select(rel(A, Keyword, B), Pre, Pre1),
 	member(type(A, _Type), Pre1).
 
 % There is some sort of relation (e.g. flowing through) that is impossible
 % to guess the word for.
-rule(Pre, [triple(A, rel, B) | Post]) :-
+rule(Pre, [triple(A, var(_), B) | Post]) :-
 	member(pred(E, _Verb), Pre), % some event
 	select(rel(E, agent, A), Pre, Post), % .. that is done by A
 	member(rel(E, _, B), Post),
