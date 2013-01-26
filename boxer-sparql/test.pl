@@ -142,9 +142,7 @@ go(N) :-
 	%write(Hints),nl,
 	postprocess(Hints, EnrichedHints),
 	filter_triples(EnrichedHints, Triples),
-	write('almost'),
 	fill_in_names(Literals, Triples, TriplesWithNames),
-	write(ok),
 	member(topic(Topic), EnrichedHints),
 	sparql_write(Topic, TriplesWithNames), nl,
 	fail ; !.
