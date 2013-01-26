@@ -21,6 +21,7 @@ known_action(direct, rdf(dbpprop:director)).
 %known_action(born, rdf(dbpprop:birthPlace)).
 %known_action(born, rdf(dbpprop:placeOfBirth)).
 known_action(bear, rdf(dbpprop:placeOfBirth)).
+known_action(found, rdf(dbpprop:founded)).
 
 % Type (pred) to relation mapping
 known_type_relation(X, rdf(dbpprop:X)). %wild guess

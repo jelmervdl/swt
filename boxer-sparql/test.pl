@@ -32,11 +32,9 @@ s(_:rel(Ref1, Ref2, Keyword, _), [rel(Ref1, Keyword, Ref2)]).
 %	\+ member(Sym, [agent, patient, of]),
 %	known_relation(Sym, Rel).
 
-s(_:pred(Ref, unit_of_time, n, _), [filter(datatype, Ref, rdf(xsd:integer))]) :- !.
+%s(_:pred(Ref, unit_of_time, n, _), [filter(datatype, Ref, rdf(xsd:date))]) :- !.
 
-s(_:pred(Ref1, Sym, n, _), [type(Ref1, Sym) | Triples]) :-
-	known_type(Sym, Resource), Triples = [triple(Ref1, rdf(rdf:type), Resource)]%, ! % behavior-altering cut warning
-	; Triples = [].
+s(_:pred(Ref1, Sym, n, _), [type(Ref1, Sym)]).
 
 s(_:pred(Ref1, Sym, v, _), [pred(Ref1, Sym)]).
 
@@ -102,6 +100,9 @@ fill_in_names(Literals, [triple(nameref(Tokens), B, C) | Triples], [triple(lit(N
 fill_in_names(Literals, [triple(A, B, C) | Triples], [triple(A, B, C) | TriplesWithNames]) :-
 	\+ A = nameref(_),
 	\+ C = nameref(_),
+	fill_in_names(Literals, Triples, TriplesWithNames).
+fill_in_names(Literals, [X | Triples], [X | TriplesWithNames]) :-
+	\+ X = triple(_, _, _),
 	fill_in_names(Literals, Triples, TriplesWithNames).
 
 
