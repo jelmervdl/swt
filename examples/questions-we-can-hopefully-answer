@@ -14,12 +14,13 @@ NEGATION
 Which rivers flow through France?
 Which rivers do not flow through France?
 (Could be solved with:
-SELECT DISTINCT ?x1 WHERE {
-  ?x1 rdf:type dbpediaowl:River.
-  ?x1 ?rel ?x0.
-  ?x3 rdfs:label "France"@en.
-  FILTER( ?x3 != ?x0 )
-})
+SELECT ?nx1 WHERE {
+  ?nx1 rdf:type dbpediaowl:River.
+  ?nx1 ?rel ?nx0.
+  ?x0 rdfs:label "France"@en.
+  FILTER (?nx0 != ?x0)
+}
+)
 
 Which countries do not border Mexico?
 Which songs by the beatles were not played on radio? (ok, that information is not on dbpedia, but it would be nice to analyze corectly)

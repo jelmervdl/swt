@@ -11,22 +11,33 @@ sublist(A, B) :-
 s(drs(_Ref, Drs), Y) :-
 	sl(Drs, Y).
 
-s(_:whq(_AnswerType, Drs1, Ref, Drs2), [topic(Ref) | Y]) :-
+s(_:whq(_AnswerType, Drs1, Ref, Drs2), [topic(var(Ref)) | Y]) :-
 	s(Drs1, Y1),
 	s(Drs2, Y2),
 	append(Y1, Y2, Y).
+
+s(alfa(_AlfaType, Drs1, drs([], [_:not(NDrs)])), Y) :-
+	s(Drs1, Y1),
+	s(NDrs, NY),
+	find_vars(Y1, V1),
+	find_vars(NY, NV),
+	negate_terms(NY, Y2),
+	intersection(V1, NV, UnequalVars),
+	gerenate_fitlers(UnequalVars, Filters), % add filter for union of V1 and NV
+	append(Y1, Y2, Y3),
+	append(Filters, Y3, Y).
 
 s(alfa(_AlfaType, Drs1, Drs2), Y) :-
 	s(Drs1, Y1),
 	s(Drs2, Y2),
 	append(Y1, Y2, Y).
 
-s(Tokens:named(Ref, _Sym, _NeType, _), [triple(Ref, rdf(rdfs:label), nameref(Tokens))]).
+s(Tokens:named(Ref, _Sym, _NeType, _), [triple(var(Ref), rdf(rdfs:label), nameref(Tokens))]).
 
 %s(_:rel(Ref1, Ref2, Sym, _), [rel(Ref1, Sym, Ref2)]) :-
 %	member(Sym, [agent, patient]).
 
-s(_:rel(Ref1, Ref2, Keyword, _), [rel(Ref1, Keyword, Ref2)]).
+s(_:rel(Ref1, Ref2, Keyword, _), [rel(var(Ref1), Keyword, var(Ref2))]).
 
 %s(_:rel(Ref1, Ref2, Sym, _), [triple(Ref1, Rel, Ref2), rel(Ref1, Sym, Ref2)]) :-
 %	\+ member(Sym, [agent, patient, of]),
@@ -34,15 +45,15 @@ s(_:rel(Ref1, Ref2, Keyword, _), [rel(Ref1, Keyword, Ref2)]).
 
 %s(_:pred(Ref, unit_of_time, n, _), [filter(datatype, Ref, rdf(xsd:date))]) :- !.
 
-s(_:pred(Ref1, Sym, n, _), [type(Ref1, Sym)]).
+s(_:pred(Ref1, Sym, n, _), [type(var(Ref1), Sym)]).
 
-s(_:pred(Ref1, Sym, v, _), [pred(Ref1, Sym)]).
+s(_:pred(Ref1, Sym, v, _), [pred(var(Ref1), Sym)]).
 
-s(_:pred(Ref1, topic, a, _), [topic(Ref1)]) :- !.
+s(_:pred(Ref1, topic, a, _), [topic(var(Ref1))]) :- !.
 
-s(_:pred(Ref1, Sym, a, _), [adverb(Ref1, Sym)]).
+s(_:pred(Ref1, Sym, a, _), [adverb(var(Ref1), Sym)]).
 
-s(_:eq(Ref1, Ref2), [eq(Ref1, Ref2)]).
+s(_:eq(Ref1, Ref2), [eq(var(Ref1), var(Ref2))]).
 
 % also ignore the meaning of prop.
 s(_:prop(_, Drs), Y) :-
@@ -52,9 +63,6 @@ s(_:imp(Drs1, Drs2), Y) :-
 	s(Drs1, Y1),
 	s(Drs2, Y2),
 	append(Y1, Y2, Y).
-
-s(_:not(Drs), [not(Y)]) :-
-	s(Drs, Y).
 
 % sl/2 is s/2 but for lists of drs/2's.
 sl([], []).
@@ -90,38 +98,34 @@ find_names_(Literals, [T|Tokens], [N|Names]) :-
 
 % Replace nameref/1 with a string from Literals (second part of sem/3)
 fill_in_names(_, [], []).
-fill_in_names(Literals, [triple(A, B, nameref(Tokens)) | Triples], [triple(A, B, lit(Name)) | TriplesWithNames]) :-
-	!,
-	find_names(Literals, Tokens, Names),
-	atomic_list_concat(Names, ' ', Name),
+fill_in_names(Literals, [X | Triples], [Filled | TriplesWithNames]) :-
+	X =.. [Pred|Args],
+	fill_in_names_(Literals, Args, ArgsWithNames),
+	Filled =.. [Pred|ArgsWithNames],
 	fill_in_names(Literals, Triples, TriplesWithNames).
-fill_in_names(Literals, [triple(nameref(Tokens), B, C) | Triples], [triple(lit(Name), B, C) | TriplesWithNames]) :-
-	!,
-	find_names(Literals, Tokens, Names),
-	atomic_list_concat(Names, ' ', Name),
-	fill_in_names(Literals, Triples, TriplesWithNames).
-fill_in_names(Literals, [triple(A, B, C) | Triples], [triple(A, B, C) | TriplesWithNames]) :-
-	\+ A = nameref(_),
-	\+ C = nameref(_),
-	fill_in_names(Literals, Triples, TriplesWithNames).
-fill_in_names(Literals, [X | Triples], [X | TriplesWithNames]) :-
-	\+ X = triple(_, _, _),
-	fill_in_names(Literals, Triples, TriplesWithNames).
+
+fill_in_names_(_, [], []).
+fill_in_names_(Literals, [X|Rest], [Y|RestFilled]) :-
+	(
+		X = nameref(Tokens),
+		Y = lit(Name),
+		find_names(Literals, Tokens, Names),
+		atomic_list_concat(Names, ' ', Name)
+		;
+		\+ X = nameref(_),
+		X = Y
+	),
+	fill_in_names_(Literals, Rest, RestFilled).
 
 
 % Remove everything that is not a triple/3
 filter_triples([],[]).
 filter_triples([X|R], [X|R2]) :-
-	(
-		X = triple(_, _, _)
-		; X = filter(_, _, _)
-	), !,
+	X =.. [Name|_],
+	member(Name, [triple, filter, topic]), 
+	!, % note!
 	filter_triples(R, R2).
-filter_triples([X|R], R2) :-
-	\+ (
-		X = triple(_, _, _)
-		; X = filter(_, _, _)
-	),
+filter_triples([_|R], R2) :-
 	filter_triples(R, R2).
 
 test(N) :-
@@ -138,7 +142,9 @@ go(N) :-
 	%write(Hints),nl,
 	postprocess(Hints, EnrichedHints),
 	filter_triples(EnrichedHints, Triples),
+	write('almost'),
 	fill_in_names(Literals, Triples, TriplesWithNames),
+	write(ok),
 	member(topic(Topic), EnrichedHints),
 	sparql_write(Topic, TriplesWithNames), nl,
 	fail ; !.

@@ -38,11 +38,7 @@ sparql_write_atom(lit(X)) :-
 sparql_write_atom(rdf(X)) :-
 	write(X).
 
-% also a bit of a fallback.
-% also, if it isn't a rdf-atom nor a literal, it is probably a variable.
-sparql_write_atom(X) :-
-	\+ X = lit(_),
-	\+ X = rdf(_),
+sparql_write_atom(var(X)) :-
 	write('?'),
 	write(X).
 
