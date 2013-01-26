@@ -21,6 +21,12 @@ sparql_write_triple(triple(A, Ref, B)) :-
 	sparql_write_atom(Ref), write(' '),
 	sparql_write_atom(B), write('.').
 
+sparql_write_triple(filter(What, Ref, Is)) :-
+	write('FILTER ('), write(What),
+	write('('), sparql_write_atom(Ref), write(')'),
+	write(' = '), sparql_write_atom(Is),
+	write(')').
+
 %% sparql_write_atom(X) :-
 %% 	var(X), !,
 %% 	random_varname(X),

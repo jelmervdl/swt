@@ -16,6 +16,12 @@ known_action(direct, rdf(dbpprop:director)).
 %known_action(write, rdf(movie:writer)).
 %known_action(direct, rdf(movie:director)).
 
+% These are the wrong way around, being born
+% is passive. To direct is active.
+%known_action(born, rdf(dbpprop:birthPlace)).
+%known_action(born, rdf(dbpprop:placeOfBirth)).
+known_action(bear, rdf(dbpprop:placeOfBirth)).
+
 % Type (pred) to relation mapping
 known_type_relation(X, rdf(dbpprop:X)). %wild guess
 

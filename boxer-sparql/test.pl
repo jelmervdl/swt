@@ -32,6 +32,8 @@ s(_:rel(Ref1, Ref2, Keyword, _), [rel(Ref1, Keyword, Ref2)]).
 %	\+ member(Sym, [agent, patient, of]),
 %	known_relation(Sym, Rel).
 
+s(_:pred(Ref, unit_of_time, n, _), [filter(datatype, Ref, rdf(xsd:integer))]) :- !.
+
 s(_:pred(Ref1, Sym, n, _), [type(Ref1, Sym) | Triples]) :-
 	known_type(Sym, Resource), Triples = [triple(Ref1, rdf(rdf:type), Resource)]%, ! % behavior-altering cut warning
 	; Triples = [].
@@ -106,10 +108,16 @@ fill_in_names(Literals, [triple(A, B, C) | Triples], [triple(A, B, C) | TriplesW
 % Remove everything that is not a triple/3
 filter_triples([],[]).
 filter_triples([X|R], [X|R2]) :-
-	X = triple(_, _, _), !,
+	(
+		X = triple(_, _, _)
+		; X = filter(_, _, _)
+	), !,
 	filter_triples(R, R2).
 filter_triples([X|R], R2) :-
-	\+ X = triple(_, _, _),
+	\+ (
+		X = triple(_, _, _)
+		; X = filter(_, _, _)
+	),
 	filter_triples(R, R2).
 
 test(N) :-

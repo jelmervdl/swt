@@ -2,11 +2,11 @@
 :- use_module(hints, [known_action/2, known_type_relation/2]).
 
 % Find agent-patient-verb relations.
-rule(Pre, [triple(A, Relation, B)|Pre]) :-
-	member(rel(C, patient, A), Pre), 	
-	member(rel(C, agent, B), Pre),
-	\+ member(triple(A, _, B), Pre), % only continue if not already a relation between a and b
-	member(pred(C, Action), Pre),
+rule(Pre, [triple(A, Relation, B)|Post]) :-
+	select(rel(C, patient, A), Pre, Pre1), 	
+	select(rel(C, _, B), Pre1, Post),
+	\+ member(triple(A, _, B), Post), % only continue if not already a relation between a and b
+	member(pred(C, Action), Post),
 	known_action(Action, Relation).
 
 % Turn prime & minister into 'prime minister' 
@@ -23,6 +23,8 @@ rule(Pre, [triple(B, Rel, A) | Pre1]) :-
 	known_type_relation(Type, Rel).
 
 % Or maybe they are the other way around: A of B, therefore B something of A.
+% But most of the time we have no idea what the actual relation name is
+% therefore just use a variable.
 rule(Pre, [triple(A, rel, B) | Pre1]) :-
 	member(Keyword, [in, of]),
 	select(rel(A, Keyword, B), Pre, Pre1),
@@ -43,6 +45,10 @@ rule(Pre, Post) :-
 
 % For equality, we rename all the equal symbols to the same symbol.
 rename_instances_in_triples(_, _, [], []).
+rename_instances_in_triples(A, B, [filter(X, A, Y)|Rest], [filter(X, B, Y)|Renamed]) :-
+	!,
+	rename_instances_in_triples(A, B, Rest, Renamed).
+
 rename_instances_in_triples(A, B, [triple(A, X, Y)|Rest], [triple(B, X, Y)|Renamed]) :-
 	!,
 	rename_instances_in_triples(A, B, Rest, Renamed).
