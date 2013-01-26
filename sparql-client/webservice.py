@@ -64,7 +64,7 @@ class QuestionableHandler(BaseHTTPRequestHandler):
 
         result = self.service.query(form['query'].value)
 
-        if len(result) == 1:
+        if len(result) == 1 and isinstance(result[0][0], sparql.IRI):
             self.send_response(301)
             self.send_header('Location', result[0][0].value)
             self.end_headers()
