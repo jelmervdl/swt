@@ -3,6 +3,30 @@ from urllib2 import HTTPError
 import cgi
 import subprocess
 import sparql
+import re
+
+
+class Template:
+
+    def __init__(self, file):
+        self.data = dict()
+
+        with open(file) as f:
+            self.template = f.read()
+
+    def set(self, name, value):
+        self.data[name] = value
+
+    def render(self):
+        return re.sub(r"\{(.*?)\{(.+?)\}(.*?)\}", self.__replace, self.template)
+
+    def __replace(self, match):
+        if match.group(2) in self.data:
+            #escaped = cgi.escape(self.data[match.group(2)])
+            escaped = self.data[match.group(2)]
+            return '%s%s%s' % (match.group(1), escaped, match.group(3))
+        else:
+            return ''
 
 
 class QuestionableService:
@@ -34,7 +58,8 @@ class QuestionableService:
 class QuestionableView:
 
     def render(self, result):
-        return result
+        if isinstance(result[0], sparql.Literal):
+            return '<p>%s</p>' % cgi.escape(result[0].value)
 
 
 class QuestionableHandler(BaseHTTPRequestHandler):
@@ -48,8 +73,8 @@ class QuestionableHandler(BaseHTTPRequestHandler):
         self.send_header('Content-type', 'text/html')
         self.end_headers()
 
-        with open('sparql-client/www/index.html') as f:
-            self.wfile.write(f.read())
+        template = Template('sparql-client/www/index.html')
+        self.wfile.write(template.render())
 
         return
 
@@ -70,12 +95,16 @@ class QuestionableHandler(BaseHTTPRequestHandler):
             self.end_headers()
         else:
             self.send_response(200)
-            self.send_header('Content-Type', 'application/json')
+            self.send_header('Content-Type', 'text/html')
             self.end_headers()
+
             response = map(self.view.render, result)
-            self.wfile.write(response)
-        
-        return
+
+            template = Template('sparql-client/www/index.html')
+            template.set('query', form['query'].value)
+            template.set('results', '\n'.join(response))
+
+            self.wfile.write(template.render().encode('ascii', 'xmlcharrefreplace'))
 
 
 server = HTTPServer(('', 8080), QuestionableHandler)

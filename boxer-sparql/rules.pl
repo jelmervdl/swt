@@ -66,6 +66,11 @@ rule(Pre, Post) :-
 	select(eq(A, B), Pre, Pre1), % removes eq/2
 	rename_instances_in_triples(B, A, Pre1, Post).
 
+% Prefer to select the name fo things :)
+rule(Pre, [topic(var(label)), triple(X, rdf(rdfs:label), var(label)), filter(rdf('LANG(?label)'), '=', rdf('"en"')) | Post]) :-
+	\+ member(topic(var(label)), Pre), % only if it isn't already applied.
+	select(topic(X), Pre, Post).
+
 % For equality, we rename all the equal symbols to the same symbol.
 rename_instances_in_triples(_, _, [], []).
 rename_instances_in_triples(A, B, [filter(X, A, Y)|Rest], [filter(X, B, Y)|Renamed]) :-

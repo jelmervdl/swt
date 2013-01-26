@@ -10,7 +10,7 @@
 			}
 
 			body {
-				font-size: 14px;
+				font: 14px/16.8px sans-serif;
 			}
 
 			#question-form {
@@ -37,6 +37,7 @@
 				bottom: 0;
 				left: 0;
 				right: 0;
+				padding: 1em;
 			}
 
 			#result iframe {
@@ -48,12 +49,10 @@
 		</style>
 	</head>
 	<body>
-		<form id="question-form" method="post" action="" target="result-frame">
-			<input type="text" name="query" placeholder="Ask your question here">
+		<form id="question-form" method="post" action="">
+			<input type="text" name="query" {value="{query}"} placeholder="Ask your question here">
 			<button type="submit">Ask</button>
 		</form>
-		<div id="result">
-			<iframe name="result-frame"></iframe>
-		</div>
+		{<div id="result">{results}</div>}
 	</body>
 </html>
