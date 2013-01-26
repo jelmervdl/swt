@@ -2,6 +2,7 @@
 :- use_module(hints, [known_type/2, known_relation/2, known_action/2]).
 :- use_module(rules, [rule/2]).
 :- use_module(sparql, [sparql_write/2]).
+:- use_module(negation, [s_negate/3]).
 
 sublist(A, B) :-
 	append(First, _, B),
@@ -16,16 +17,11 @@ s(_:whq(_AnswerType, Drs1, Ref, Drs2), [topic(var(Ref)) | Y]) :-
 	s(Drs2, Y2),
 	append(Y1, Y2, Y).
 
+% Negation is a *i***.
 s(alfa(_AlfaType, Drs1, drs([], [_:not(NDrs)])), Y) :-
 	s(Drs1, Y1),
 	s(NDrs, NY),
-	find_vars(Y1, V1),
-	find_vars(NY, NV),
-	negate_terms(NY, Y2),
-	intersection(V1, NV, UnequalVars),
-	gerenate_fitlers(UnequalVars, Filters), % add filter for union of V1 and NV
-	append(Y1, Y2, Y3),
-	append(Filters, Y3, Y).
+	s_negate(Y1, NY, Y), write('ding!').
 
 s(alfa(_AlfaType, Drs1, Drs2), Y) :-
 	s(Drs1, Y1),
