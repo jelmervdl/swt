@@ -42,7 +42,7 @@ class Template:
 class QuestionableService:
 
     def __init__(self):
-        self.tries = 10
+        self.tries = 20
 
         endpoint = "http://dbpedia.org/sparql"
         self.sparql = sparql.Service(endpoint)
