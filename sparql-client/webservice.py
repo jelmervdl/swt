@@ -43,7 +43,7 @@ class Template:
 
 class QuestionableService:
 
-    def __init__(self): 
+    def __init__(self):
         self.tries = 10
 
         endpoint = "http://dbpedia.org/sparql"
@@ -77,7 +77,14 @@ class QuestionableView:
 
     def render(self, result):
         if isinstance(result[0], sparql.Literal):
-            return '<p>%s</p>' % cgi.escape(result[0].value)
+            html = cgi.escape(result[0].value)
+            #is there also a count, show it as well.
+            if len(result) == 2:
+                html = '%s (%d)' % (html, int(result[1].value))
+
+            return '<p>%s</p>' % html
+        else:
+            return str(result)
 
 
 class QuestionableHandler(BaseHTTPRequestHandler):

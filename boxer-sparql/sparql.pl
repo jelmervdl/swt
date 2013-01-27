@@ -1,11 +1,16 @@
-:- module(sparql, [sparql_write/2]).
+:- module(sparql, [sparql_write/1]).
 :- use_module(rdf, [rdf_namespace/2]).
-:- use_module(util, [map/3, filter/3, is_triple/1, is_filter/1]).
+:- use_module(util, [map/3, filter/3, is_triple/1, is_filter/1, is_topic/1]).
 
-sparql_write(Topic, RevTriples) :-
+sparql_write(RevTriples) :-
 	sparql_write_namespaces,
 	reverse(RevTriples, Triples), % often yields a better order.
-	write('SELECT DISTINCT '), sparql_write_atom(Topic), write(' WHERE {'),nl,
+	% Format topics
+	filter(util:is_topic, Triples, Topics),
+	map(sparql:sparql_format, Topics, TopicExpressions),
+	atomic_list_concat(TopicExpressions, ', ', TopicExpression),
+	% Print query
+	write('SELECT '), write(TopicExpression), write(' WHERE {'),nl,
 	(
 		member(Triple, Triples),
 		Triple = triple(_, _, _),
@@ -27,6 +32,9 @@ sparql_write_namespaces :-
 	rdf_namespace(X, Y),
 	write('PREFIX '), write(X), write(': <'), write(Y), write('>'), nl,
 	fail; !.
+
+sparql_format(topic(X), Expr) :-
+	sparql_format_atom(X, Expr).
 
 sparql_format_filter(filter(Lhs, Op, Rhs), Expr) :-
 	sparql_format_atom(Lhs, LhsExpr),

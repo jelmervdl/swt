@@ -1,6 +1,6 @@
 :- use_module(library(lists),[member/2,select/3]).
 :- use_module(rules, [rule/2]).
-:- use_module(sparql, [sparql_write/2]).
+:- use_module(sparql, [sparql_write/1]).
 :- use_module(negation, [s_negate/3]).
 :- use_module(util, [filter/3]).
 
@@ -126,7 +126,6 @@ go(N) :-
 	s(Drs, Hints),
 	%write(Hints),nl,
 	postprocess(Hints, Triples),
-	member(topic(Topic), Triples),
 	fill_in_names(Literals, Triples, TriplesWithNames),
-	sparql_write(Topic, TriplesWithNames), nl,
+	sparql_write(TriplesWithNames), nl,
 	fail ; !.

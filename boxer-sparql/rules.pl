@@ -73,8 +73,12 @@ rule(Pre, Post) :-
 	select(eq(A, B), Pre, Pre1), % removes eq/2
 	rename_instances_in_triples(B, A, Pre1, Post).
 
-% Prefer to select the name fo things :)
-rule(Pre, [topic(var(label)), triple(X, rdf(rdfs:label), var(label)), filter(rdf('LANG(?label)'), '=', rdf('"en"')) | Post]) :-
+% Prefer to select the name and count of things :)
+rule(Pre, [
+	topic(rdf('COUNT(?label) as ?count')),
+	topic(var(label)),
+	triple(X, rdf(rdfs:label), var(label)),
+	filter(rdf('LANG(?label)'), '=', rdf('"en"')) | Post]) :-
 	\+ member(topic(var(label)), Pre), % only if it isn't already applied.
 	select(topic(X), Pre, Post).
 
