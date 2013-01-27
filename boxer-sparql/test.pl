@@ -1,5 +1,4 @@
 :- use_module(library(lists),[member/2,select/3]).
-:- use_module(hints, [known_type/2, known_relation/2, known_action/2]).
 :- use_module(rules, [rule/2]).
 :- use_module(sparql, [sparql_write/2]).
 :- use_module(negation, [s_negate/3]).
@@ -115,15 +114,10 @@ fill_in_names_(Literals, [X|Rest], [Y|RestFilled]) :-
 	fill_in_names_(Literals, Rest, RestFilled).
 
 
-% Remove everything that is not a triple/3
-filter_triples(In, Filtered) :-
-	filter(is_triple, In, Filtered).
-
 test(N) :-
 	sem(N, _, Y),
 	s(Y, Z),
-	postprocess(Z, ZZ),
-	filter_triples(ZZ, D),
+	postprocess(Z, D),
 	write(D),
 	nl.
 
@@ -131,9 +125,8 @@ go(N) :-
 	sem(N, Literals, Drs),
 	s(Drs, Hints),
 	%write(Hints),nl,
-	postprocess(Hints, EnrichedHints),
-	filter_triples(EnrichedHints, Triples),
+	postprocess(Hints, Triples),
+	member(topic(Topic), Triples),
 	fill_in_names(Literals, Triples, TriplesWithNames),
-	member(topic(Topic), EnrichedHints),
 	sparql_write(Topic, TriplesWithNames), nl,
 	fail ; !.

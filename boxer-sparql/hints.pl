@@ -1,10 +1,11 @@
-:- module(hints, [known_type/2, known_relation/2, known_action/2, known_type_relation/2]).
+:- module(hints, [known_type/2, known_relation/2, known_action/2, known_action_rev/2, known_type_relation/2]).
 
 % typename to type resource mapping
 % TODO: maybe it is helpful to look at foaf and dbpediaowl rdf and
 % see which relations they define. If one matches with X, let that
 % then be a known type with the correct prefix.
 known_type(person, rdf(foaf:'Person')).
+known_type(movie, rdf(dbpediaowl:'Film')).
 known_type(X, rdf(dbpediaowl:Y)) :-
 	ucfirst(Y, X).
 
@@ -22,6 +23,8 @@ known_action(direct, rdf(dbpprop:director)).
 %known_action(born, rdf(dbpprop:placeOfBirth)).
 known_action(bear, rdf(dbpprop:placeOfBirth)).
 known_action(found, rdf(dbpprop:founded)).
+
+known_action_rev(star, rdf(dbpprop:starring)).
 
 % Type (pred) to relation mapping
 known_type_relation(X, rdf(dbpprop:X)). %wild guess
