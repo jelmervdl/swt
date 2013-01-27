@@ -3,6 +3,7 @@
 :- use_module(rules, [rule/2]).
 :- use_module(sparql, [sparql_write/2]).
 :- use_module(negation, [s_negate/3]).
+:- use_module(util, [filter/3]).
 
 sublist(A, B) :-
 	append(First, _, B),
@@ -115,14 +116,8 @@ fill_in_names_(Literals, [X|Rest], [Y|RestFilled]) :-
 
 
 % Remove everything that is not a triple/3
-filter_triples([],[]).
-filter_triples([X|R], [X|R2]) :-
-	X =.. [Name|_],
-	member(Name, [triple, filter, topic]), 
-	!, % note!
-	filter_triples(R, R2).
-filter_triples([_|R], R2) :-
-	filter_triples(R, R2).
+filter_triples(In, Filtered) :-
+	filter(is_triple, In, Filtered).
 
 test(N) :-
 	sem(N, _, Y),
