@@ -4,6 +4,11 @@ import cgi
 import subprocess
 import sparql
 import re
+from codecs import open
+
+
+def escapeattr(data):
+    return data.replace('"', '&quot;')
 
 
 class Template:
@@ -11,14 +16,21 @@ class Template:
     def __init__(self, file):
         self.data = dict()
 
-        with open(file) as f:
+        with open(file, 'r', 'utf-8') as f:
             self.template = f.read()
 
     def set(self, name, value):
         self.data[name] = value
 
     def render(self):
-        return re.sub(r"\{(.*?)\{(.+?)\}(.*?)\}", self.__replace, self.template)
+        template = re.sub(r"\{\?(\w+?)\s+(.+?)\}", self.__remove, self.template)
+        return re.sub(r"\{(.*?)\{(.+?)\}(.*?)\}", self.__replace, template)
+
+    def __remove(self, match):
+        if match.group(1) in self.data:
+            return match.group(2)
+        else:
+            return ''
 
     def __replace(self, match):
         if match.group(2) in self.data:
@@ -32,23 +44,29 @@ class Template:
 class QuestionableService:
 
     def __init__(self):
+        self.tries = 10
+
         endpoint = "http://dbpedia.org/sparql"
         self.sparql = sparql.Service(endpoint)
 
     def query(self, query):
-        answers = []
+        tries = 0
         sparql_queries = self.__parse(query)
 
         for sparql_query in sparql_queries:
+            tries += 1
+            if tries >= self.tries:
+                break
+
             try:
-                print "%s\n" % (sparql_query,)
+                print "Try %d: %s\n" % (tries, sparql_query)
                 answers = self.sparql.query(sparql_query).fetchall()
                 if len(answers) > 0:
-                    break
+                    return answers
             except HTTPError, e:
                 print e
 
-        return answers
+        return []
 
     def __parse(self, query):
         cmd = ['./ask', str(query)]
@@ -74,7 +92,7 @@ class QuestionableHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
         template = Template('sparql-client/www/index.html')
-        self.wfile.write(template.render())
+        self.wfile.write(template.render().encode("utf-8"))
 
         return
 
@@ -87,6 +105,7 @@ class QuestionableHandler(BaseHTTPRequestHandler):
                 'CONTENT_TYPE': self.headers['Content-Type'],
             })
 
+        query = form.getfirst('query', '').decode('utf-8')
         result = self.service.query(form['query'].value)
 
         if len(result) == 1 and isinstance(result[0][0], sparql.IRI):
@@ -101,10 +120,10 @@ class QuestionableHandler(BaseHTTPRequestHandler):
             response = map(self.view.render, result)
 
             template = Template('sparql-client/www/index.html')
-            template.set('query', form['query'].value)
+            template.set('query', escapeattr(query))
             template.set('results', '\n'.join(response))
 
-            self.wfile.write(template.render().encode('ascii', 'xmlcharrefreplace'))
+            self.wfile.write(template.render().encode('utf-8'))
 
 
 server = HTTPServer(('', 8080), QuestionableHandler)
