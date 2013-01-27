@@ -1,6 +1,13 @@
 :- module(rules, [rule/2]).
 :- use_module(hints, [known_action/2, known_action_rev/2, known_type_relation/2, known_type/2]).
 
+% Turn prime & minister into 'prime minister' 
+% (This rule is unusable as it also adds parts like 'all' and 'most')
+%% rule(Pre, [type(Rel, Extended) | Post]) :-
+%% 	select(type(Rel, Sym), Pre, Pre1),
+%% 	select(adverb(Rel, Adv), Pre1, Post),
+%% 	atomic_list_concat([Adv, Sym], ' ', Extended).
+
 % If we are looking for a date, add it to the property name (founded -> foundingDate)
 rule(Pre, [triple(PatientRel, rdf(dbpediaowl:Property), TimeRel) | Post]) :-
 	select(pred(EventRel, Sym), Pre, Pre1),
@@ -23,12 +30,6 @@ rule(Pre, [triple(B, Relation, A)|Post]) :-
 	\+ member(triple(B, _, A), Post), % only continue if not already a relation between a and b
 	member(pred(C, Action), Post),
 	known_action_rev(Action, Relation).
-
-% Turn prime & minister into 'prime minister' 
-%% rule(Pre, [type(Rel, Extended) | Post]) :-
-%% 	select(type(Rel, Sym), Pre, Pre1),
-%% 	select(adverb(Rel, Adv), Pre1, Post),
-%% 	atomic_list_concat([Adv, Sym], ' ', Extended).
 
 % Find 'in' and 'of' relations
 rule(Pre, [triple(B, Rel, A) | Pre1]) :-

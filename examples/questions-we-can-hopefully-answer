@@ -33,10 +33,17 @@ Who has directed the most movies starring Johnny Depp?
 
 LISTS
 Name all German film directors.
+("German" is the hard part, because it is parsed exactly like "all". If I use lower case "german", it will parse it as if I was looking for directors of films of 'german'. Other, related problem: DBpedia does not say whether someone is german, but does have the type yago:GermanFilmDirectors. But that is not something I can easily deduce from the parse.)
+
 List all states of America.
+
 List all actors that played in a movie with Kevin Bacon.
+List all actors that played in a movie starring Kevin Bacon.
 
 MULTIPLE RELATIONS
 Where did the wife of Barack Obama graduate?
 How many inhabitants does the country that borders Mexico and Canada have?
 Where was the inventor of the microwave born?
+
+BLENDER
+Who directed the most movies and won an Oscar?

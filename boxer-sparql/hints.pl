@@ -25,6 +25,7 @@ known_action(bear, rdf(dbpprop:placeOfBirth)).
 known_action(found, rdf(dbpprop:founded)).
 
 known_action_rev(star, rdf(dbpprop:starring)).
+known_action_rev(play, rdf(dbpprop:starring)).
 
 % Type (pred) to relation mapping
 known_type_relation(X, rdf(dbpprop:X)). %wild guess

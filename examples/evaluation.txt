@@ -1,0 +1,65 @@
+Who is the Prime Minister of the UK?
+fails on DBpedia data
+
+Where was Tom Cruise born?
+ok. (1st query)
+
+When was Microsoft founded?
+ok. (2nd query)
+
+When was Apple founded?
+fails. Apple -> "Apple Inc." The first won't match, the latter won't parse.
+
+Through which countries runs the Rhine?
+fails. Can't deterime topic? I fail.
+
+Which rivers flow through France?
+ok. (1st query) (ok-ish, flow through is translated as an unkown relation to France.)
+
+Which rivers do not flow through France?
+ok. (1st query) (same 'but' as above. Slow, wwaay too many rivers on this world.)
+
+Which countries do not border Mexico?
+fails. (Data not easily accessible on Wikipedia)
+
+Which songs by the beatles were not played on radio?
+fails due to my hints that 'plays' means 'starring in'. Otherwise pretty ok. Oh, and well missing data on wikipedia.
+
+What is the largest mammal?
+fails. Doesn't now how to express largest.
+
+Which band sold the most records?
+fails. Data is probably aggregated and prolog tries to count all the records.
+
+Which country is bigger, Canada or China?
+fails. DRS cannot be handled by Prolog program.
+
+Who has directed the most movies starring Johnny Depp?
+ok. (1st query) Both Gore Verbinski (6) and Tim Burton (6) win.
+
+Name all German film directors.
+fails. Doesn't now how to handle adverb German. Lists all film directors (also Germans ;) 
+
+List all states of America.
+fails. Data not expressed on DBpedia as expected by Prolog.
+
+List all actors that played in a movie with Kevin Bacon.
+fails. Doesn't know what to do with 'with'.
+
+List all actors that played in a movie starring Kevin Bacon.
+fails. Looks for things of the type dbpediaowl:Actor. If it had looked for Person, it would have succeeeded.
+
+Where did the wife of Barack Obama graduate?
+fails. Data not expressed on DBpedia as expected by Prolog. Also, Prolog can't cobine Barack Obama in one label.
+
+How many inhabitants does the country that borders Mexico and Canada have?
+fails. Prolog cannot convert. Anyways, it would fail on "borders" again.
+
+Where was the inventor of the microwave born?
+fails. Data not expressed as.. It searches for a resource with the type Inventor and with the type Microwave.
+
+Who directed the most movies and won an Oscar?
+fails probably on expecting Oscar to be a resource while it is the name of a property (it it exists at all)
+
+
+
