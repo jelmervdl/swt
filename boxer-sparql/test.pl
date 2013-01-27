@@ -21,7 +21,7 @@ s(_:whq(_AnswerType, Drs1, Ref, Drs2), [topic(var(Ref)) | Y]) :-
 s(alfa(_AlfaType, Drs1, drs([], [_:not(NDrs)])), Y) :-
 	s(Drs1, Y1),
 	s(NDrs, NY),
-	s_negate(Y1, NY, Y), write('ding!').
+	s_negate(Y1, NY, Y).
 
 s(alfa(_AlfaType, Drs1, Drs2), Y) :-
 	s(Drs1, Y1),

@@ -1,5 +1,6 @@
 :- module(sparql, [sparql_write/2]).
 :- use_module(rdf, [rdf_namespace/2]).
+:- use_module(util, [map/3, filter/3, is_triple/1, is_filter/1]).
 
 sparql_write(Topic, Triples) :-
 	sparql_write_namespaces,
@@ -10,12 +11,14 @@ sparql_write(Topic, Triples) :-
 		write('  '), sparql_write_triple(Triple), nl,
 		fail ; !
 	),
-	% Write filters after triples.
+	% Combine and write filters after triples.
 	(
-		member(Filter, Triples),
-		Filter = filter(_, _, _),
-		write('  '), sparql_write_triple(Filter), nl,
-		fail ; !
+		filter(util:is_filter, Triples, Filters),
+		Filters = [_|_], % not empty
+		map(sparql:sparql_format_filter, Filters, FilterExpressions),
+		atomic_list_concat(FilterExpressions, ' && ', FilterExpression),
+		write('  FILTER ( '), write(FilterExpression), write(' )'), nl
+		; !
 	),
 	write('}'),nl.
 
@@ -23,6 +26,20 @@ sparql_write_namespaces :-
 	rdf_namespace(X, Y),
 	write('PREFIX '), write(X), write(': <'), write(Y), write('>'), nl,
 	fail; !.
+
+sparql_format_filter(filter(Lhs, Op, Rhs), Expr) :-
+	sparql_format_atom(Lhs, LhsExpr),
+	sparql_format_atom(Rhs, RhsExpr),
+	atomic_list_concat([LhsExpr, ' ', Op, ' ', RhsExpr], Expr).
+
+sparql_format_atom(lit(X), Expr) :-
+	atomic_list_concat(['"', X, '"@en'], Expr).
+
+sparql_format_atom(rdf(X), X).
+
+sparql_format_atom(var(X), Expr) :-
+	atomic_list_concat(['?', X], Expr).
+
 
 sparql_write_triple(triple(A, Ref, B)) :-
 	sparql_write_atom(A), write(' '),

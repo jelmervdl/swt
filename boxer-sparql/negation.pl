@@ -8,7 +8,6 @@ s_negate(Y1, NY, Y) :-
 	append(Y1, Y2, Y3),
 	% add filter for union of V1 and NV
 	intersection(V1, NV, UnequalVars),
-	write(UnequalVars),
 	generate_filters(UnequalVars, Filters),
 	append(Filters, Y3, Y).
 
