@@ -26,7 +26,13 @@ sparql_write(RevTriples) :-
 		write('  FILTER ( '), write(FilterExpression), write(' )'), nl , !
 		; write('')
 	),
-	write('}'),nl.
+	write('}'),nl,
+	(
+		member(topic(rdf('COUNT(?label) as ?count')), Triples),
+		write('ORDER BY DESC(?count)'),nl
+		; write('')
+	).
+	
 
 sparql_write_namespaces :-
 	rdf_namespace(X, Y),

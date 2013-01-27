@@ -1,6 +1,6 @@
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from urllib2 import HTTPError
-import cgi
+from cgi import escape, FieldStorage
 import subprocess
 import sparql
 import re
@@ -34,9 +34,7 @@ class Template:
 
     def __replace(self, match):
         if match.group(2) in self.data:
-            #escaped = cgi.escape(self.data[match.group(2)])
-            escaped = self.data[match.group(2)]
-            return '%s%s%s' % (match.group(1), escaped, match.group(3))
+            return '%s%s%s' % (match.group(1), self.data[match.group(2)], match.group(3))
         else:
             return ''
 
@@ -76,15 +74,25 @@ class QuestionableService:
 class QuestionableView:
 
     def render(self, result):
-        if isinstance(result[0], sparql.Literal):
-            html = cgi.escape(result[0].value)
-            #is there also a count, show it as well.
-            if len(result) == 2:
-                html = '%s (%d)' % (html, int(result[1].value))
-
-            return '<p>%s</p>' % html
+        # Is there also a count, show it as well.
+        if len(result) == 3:
+            url = escapeattr(result[0].value)
+            label = escape(result[1].value)
+            count = int(result[2].value)
+            html = '<a href="%s">%s</a> (%d)' % (url, label, count)
+        # Labels: resources that had a label attribute
+        elif len(result) == 2:
+            url = escapeattr(result[0].value)
+            label = escape(result[1].value)
+            html = '<a href="%s">%s</a>' % (url, label)
+        # Single values, like a date or a placename.
+        elif isinstance(result[0], sparql.Literal):
+            html = escape(result[0].value)
+        # I just don't know.
         else:
-            return str(result)
+            html = escape(str(result))
+
+        return '<p>%s</p>' % html
 
 
 class QuestionableHandler(BaseHTTPRequestHandler):
@@ -104,7 +112,7 @@ class QuestionableHandler(BaseHTTPRequestHandler):
         return
 
     def do_POST(self):
-        form = cgi.FieldStorage(
+        form = FieldStorage(
             fp=self.rfile,
             headers=self.headers,
             environ={

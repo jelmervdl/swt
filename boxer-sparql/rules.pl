@@ -78,9 +78,9 @@ rule(Pre, [
 	topic(rdf('COUNT(?label) as ?count')),
 	topic(var(label)),
 	triple(X, rdf(rdfs:label), var(label)),
-	filter(rdf('LANG(?label)'), '=', rdf('"en"')) | Post]) :-
+	filter(rdf('LANG(?label)'), '=', rdf('"en"')) | Pre]) :-
 	\+ member(topic(var(label)), Pre), % only if it isn't already applied.
-	select(topic(X), Pre, Post).
+	member(topic(X), Pre).
 
 % For equality, we rename all the equal symbols to the same symbol.
 rename_instances_in_triples(_, _, [], []).
