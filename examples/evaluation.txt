@@ -12,6 +12,7 @@ fails. Apple -> "Apple Inc." The first won't match, the latter won't parse.
 
 Through which countries runs the Rhine?
 fails. Can't deterime topic? I fail.
+[should be "does the Rhine run/flow"]
 
 Which rivers flow through France?
 ok. (1st query) (ok-ish, flow through is translated as an unkown relation to France.)
